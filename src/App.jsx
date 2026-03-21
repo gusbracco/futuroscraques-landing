@@ -1,30 +1,31 @@
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import Particles from './components/Particles'
 import Header from './components/Header'
-import Hero from './components/Hero'
-import Projects from './components/Projects'
-import VideoSection from './components/VideoSection'
-import Impact from './components/Impact'
-import Testimonials from './components/Testimonials'
-import Sponsors from './components/Sponsors'
-import CTA from './components/CTA'
 import Footer from './components/Footer'
+import Home from './pages/Home'
+import Transparencia from './pages/Transparencia'
+import QuemSomos from './pages/QuemSomos'
+import Contato from './pages/Contato'
+import ComoApoiar from './pages/ComoApoiar'
+import ScrollToTop from './components/ScrollToTop'
 
 export default function App() {
   return (
-    <>
+    <HashRouter>
+      <ScrollToTop />
       <Particles />
       <Header />
       <main>
-        <Hero />
-        <Projects />
-        <VideoSection />
-        <Impact />
-        <Testimonials />
-        <Sponsors />
-        <CTA />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/transparencia" element={<Transparencia />} />
+          <Route path="/quemsomos" element={<QuemSomos />} />
+          <Route path="/contato" element={<Contato />} />
+          <Route path="/comoapoiar" element={<ComoApoiar />} />
+        </Routes>
       </main>
       <Footer />
-    </>
+    </HashRouter>
   )
 }
