@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const contactInfo = [
   { icon: '✉️', label: 'Email', value: 'contato@futuroscraques.org', href: 'mailto:contato@futuroscraques.org' },
@@ -7,6 +8,39 @@ const contactInfo = [
 ]
 
 export default function Contato() {
+  const [status, setStatus] = useState('idle') // idle | loading | success | error
+  const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' })
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('loading')
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/contato@futuroscraques.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          nome: form.nome,
+          email: form.email,
+          assunto: form.assunto,
+          mensagem: form.mensagem,
+          _subject: `[Site IFC] ${form.assunto || 'Nova mensagem'} — ${form.nome}`,
+          _template: 'table',
+        }),
+      })
+      const data = await res.json()
+      if (data.success === 'true' || data.success === true) {
+        setStatus('success')
+        setForm({ nome: '', email: '', assunto: '', mensagem: '' })
+      } else {
+        setStatus('error')
+      }
+    } catch {
+      setStatus('error')
+    }
+  }
+
   return (
     <div className="page-wrapper">
       <section className="page-hero">
@@ -66,30 +100,101 @@ export default function Contato() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={handleSubmit}
           >
             <h2>Envie sua Mensagem</h2>
-            <div className="form-group">
-              <input type="text" placeholder="Seu Nome" required />
-            </div>
-            <div className="form-group">
-              <input type="email" placeholder="Seu Email" required />
-            </div>
-            <div className="form-group">
-              <input type="text" placeholder="Assunto" />
-            </div>
-            <div className="form-group">
-              <textarea placeholder="Sua Mensagem" rows="6" required />
-            </div>
-            <motion.button
-              type="submit"
-              className="cta-btn"
-              style={{ width: '100%', justifyContent: 'center' }}
-              whileHover={{ y: -3 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              Enviar Mensagem
-            </motion.button>
+
+            <AnimatePresence mode="wait">
+              {status === 'success' ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    textAlign: 'center', padding: '3rem 2rem',
+                    background: 'rgba(34,197,94,0.08)',
+                    border: '1px solid rgba(34,197,94,0.3)',
+                    borderRadius: '16px',
+                  }}
+                >
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                  <h3 style={{ color: '#16a34a', marginBottom: '0.5rem', fontFamily: 'Outfit, sans-serif' }}>
+                    Mensagem enviada!
+                  </h3>
+                  <p style={{ color: '#555', marginBottom: '1.5rem' }}>
+                    Recebemos seu contato e responderemos em breve para <strong>{form.email || 'seu email'}</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    className="cta-btn"
+                    onClick={() => setStatus('idle')}
+                    style={{ margin: '0 auto' }}
+                  >
+                    Enviar outra mensagem
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <div className="form-group">
+                    <input
+                      type="text" name="nome" placeholder="Seu Nome"
+                      value={form.nome} onChange={handleChange} required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <input
+                      type="email" name="email" placeholder="Seu Email"
+                      value={form.email} onChange={handleChange} required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <input
+                      type="text" name="assunto" placeholder="Assunto"
+                      value={form.assunto} onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <textarea
+                      name="mensagem" placeholder="Sua Mensagem" rows="6"
+                      value={form.mensagem} onChange={handleChange} required
+                    />
+                  </div>
+
+                  {status === 'error' && (
+                    <p style={{
+                      color: '#ef4444', fontSize: '0.88rem',
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: '8px', padding: '0.75rem 1rem',
+                      marginBottom: '1rem',
+                    }}>
+                      ⚠️ Erro ao enviar. Tente novamente ou escreva diretamente para contato@futuroscraques.org
+                    </p>
+                  )}
+
+                  <motion.button
+                    type="submit"
+                    className="cta-btn"
+                    style={{ width: '100%', justifyContent: 'center', opacity: status === 'loading' ? 0.7 : 1 }}
+                    whileHover={status !== 'loading' ? { y: -3 } : {}}
+                    whileTap={status !== 'loading' ? { scale: 0.97 } : {}}
+                    disabled={status === 'loading'}
+                  >
+                    {status === 'loading' ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                        Enviando...
+                      </span>
+                    ) : 'Enviar Mensagem'}
+                  </motion.button>
+
+                  <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.form>
         </div>
       </section>
